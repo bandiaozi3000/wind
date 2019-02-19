@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wind.dao.StatusMapper">
+	<!-- 查询状态表全部信息 -->
+	<select id="listStatus" resultType="Status">
+	select * from `status`
+	</select>
+	<select id="getStatus" resultType="Status">
+	SELECT * from `status` where statusId=#{statusId}
+	</select>
+	<select id="listAnomalyStatus" resultType="Status">
+		select * from status where status=2
+	</select>
+</mapper>

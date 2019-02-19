@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wind.dao.CustomerMapper">
+	
+	<select id="kefuLogin" resultType="Customer">
+		select * from customer
+		where account=#{account} 
+		and customerPass=#{customerPass}
+	</select>
+	<select id="getCustomer" resultType="Customer">
+	SELECT * FROM customer WHERE state=1 and liness=0 ;
+	</select>
+	
+	<update id="updateState"  >
+	UPDATE customer set state=1 where account=#{account};
+	</update>
+	
+	<update id="updateNotState" >
+	UPDATE customer set state=0 where account=#{account};
+	</update>
+	
+	<update id="updateNotLines" >
+	UPDATE customer set liness=1 where account=#{account};
+	</update>
+	
+	<update id="updateLines" >
+	UPDATE customer set liness=0 where account=#{account};
+	</update>
+	
+	
+	
+	
+</mapper>

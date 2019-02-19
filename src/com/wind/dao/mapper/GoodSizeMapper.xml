@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wind.dao.GoodSizeMapper">
+	<insert id="addGoodInfo" parameterType="GoodSize">
+		insert into goodsize
+		values(default,#{goodsNo},#{goodsLong},#{goodsWidth},#{goodsHeight},#{goodsWeight},#{goodsAccount})
+	</insert>
+	<!-- 修改订单的长宽高 -->
+	<update id="modifyGoodInfo" parameterType="GoodSize">
+		update goodsize set goodsLong=#{goodsLong},goodsWidth=#{goodsWidth},goodsHeight=#{goodsHeight},goodsAccount=#{goodsAccount} where goodsNo=#{goodsNo}
+	</update>
+</mapper>

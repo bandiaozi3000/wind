@@ -1,0 +1,65 @@
+/*供应商管理页面*/
+.providerTable {
+    width: 100%;
+    border: 1px solid #ccc;
+}
+
+.providerTable tr {
+    height: 30px;
+    line-height: 30px;
+    text-align: center;
+}
+
+.providerTable tr:nth-child(odd) {
+    background: #f6f7f9;
+}
+
+.providerTable tr:hover {
+    background: #e9f9ca;
+}
+
+.firstTr {
+    border: 1px solid #d6dfe6;
+    background: linear-gradient(to bottom, #f3f8fc, #ebf4f9, #e3f1fa, #e0f0fd, #d8e9fd);
+}
+
+.firstTr th {
+    border-right: 2px solid rgba(209, 218, 223, 0.4);
+}
+
+.providerTable td a {
+    margin-top: 10px;
+    display: inline-block;
+    margin-right: 10px;
+
+}
+/*查看详情弹出窗口的css样式*/
+  .black_overlay{ 
+            display: none; 
+            position: absolute; 
+            top: 0%; 
+            left: 0%; 
+            width: 100%; 
+            height: 100%; 
+            background-color: black; 
+            z-index:1001; 
+            -moz-opacity: 0.8; 
+            opacity:.80; 
+            filter: alpha(opacity=88); 
+        } 
+        .white_content { 
+            border-radius:15px;
+            display: none; 
+            position: absolute; 
+            top: 10%; 
+            left: 25%; 
+            width: 35%; 
+            height: 80%; 
+            line-height:25px;
+            padding: 20px; 
+            border: 1px solid ; 
+            background-color: white; 
+            z-index:1002; 
+            overflow: auto; 
+        } 
+   

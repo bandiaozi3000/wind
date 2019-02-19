@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wind.dao.UserMapper">
+	<insert id="register" parameterType="User">
+		insert into user (userId,userName,userPassword,userPhone,userCode) values(default,#{userName},#{userPassword},#{userPhone},#{userCode})
+	</insert>
+	
+	<select id="login" resultType="User">
+		select * from user where userPhone=#{userPhone} and userPassword=#{userPassword}
+	</select>
+	
+	<update id="updateUserInfo" parameterType="User">
+		UPDATE `user` SET userName=#{userName} WHERE userId=#{userId}
+	</update>
+	
+	<update id="updateUserPassword" parameterType="User">
+		UPDATE `user` SET userPassword=#{userPassword} WHERE userId=#{userId}
+	</update>
+	
+	<select id="findById" resultType="Integer">
+		SELECT COUNT(1) FROM USER WHERE userPhone=#{userPhone}
+	</select>
+	<select id="getUser" resultType="User">
+		SELECT * FROM USER WHERE userPhone=#{userPhone}
+	</select>
+</mapper>

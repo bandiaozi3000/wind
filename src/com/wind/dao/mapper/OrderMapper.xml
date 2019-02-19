@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wind.dao.OrderMapper">
+
+	<!-- 添加订单 -->
+	<insert id="addOrder" parameterType="Order">
+		insert into `order`
+		values(default,#{orderNo},#{belongId},#{senderName},#{senderTel},#{senderAddressId},#{senderDetail},#{signName},#{signTel},#{signAddressId},#{signDetail},#{collectorId},#{delivererId},#{goodsId},#{price},#{payType},#{insuredPrice},now(),#{signTime},#{status},#{statusCode},#{remark},now(),now())
+	</insert>
+	
+	
+	<!-- 查询所有的预订单 -->
+	<select id="listOnLineOrder" resultType="OrderStatus">
+		SELECT o.*,s.statusName
+		FROM `order` o ,`status` s
+		<where>
+			o.status=1 and
+			o.statusCode=1 and
+			s.status=1 and s.statusCode=1
+			<if test="orderNo!=null and orderNo!=''">
+				and orderNo=#{orderNo}
+			</if>
+			<if test="belongId!=null and belongId!=''">
+				and belongId=#{belongId}
+			</if>
+			<if
+				test="startTime!=null and startTime!='' and endTime!=null and endTime!=''">
+				and (createTime&gt;=#{startTime} and createTime
+				&lt;=#{endTime})
+			</if>
+			ORDER BY createTime desc limit #{index},10
+		</where>
+	</select>
+	
+	<!-- 修改订单状态，把预订单改成正式单 -->
+	<update id="modifyOrderStatus" parameterType="String">
+		update `order` set statusCode=5,	modifyDate=now()
+		<where>
+			<if test="orderNo!=null and orderNo!='' ">
+				orderNo=#{orderNo}
+			</if>
+		
+		</where>
+	</update>
+	
+	<!-- 查询所有的未处理订单 -->
+	<select id="listUntreatedOrder" resultType="OrderStatus">
+		SELECT o.*,s.statusName
+		FROM `order` o ,`status` s
+		<where>
+			o.status=1 and
+			o.statusCode=7 and
+			s.status=1 and s.statusCode=7
+			<if test="orderNo!=null and orderNo!=''">
+				and orderNo=#{orderNo}
+			</if>
+			<if test="belongId!=null and belongId!=''">
+				and belongId=#{belongId}
+			</if>
+			<if
+				test="startTime!=null and startTime!='' and endTime!=null and endTime!=''">
+				and (createTime&gt;=#{startTime} and createTime
+				&lt;=#{endTime})
+			</if>
+			ORDER BY createTime desc limit #{index},10
+		</where>
+	</select>
+
+	
+	<!-- 修改订单状态，把未处理订单改成预订单 -->
+	<update id="modifyUntreatedStatus" parameterType="String">
+		update `order` set statusCode=1,modifyDate=now()
+		<where>
+			<if test="orderNo!=null and orderNo!='' ">
+				orderNo=#{orderNo}
+			</if>
+		</where>
+	</update>
+	
+	<!-- 获得未处理订单的条数 -->
+	<select id="getUntreatedCount" resultType="int">
+		select count(1) from
+		`order` where statusCode=7 and `status`=1
+		<if test="orderNo!=null and orderNo!='' ">
+			and orderNo=#{orderNo}
+		</if>
+		<if test="belongId!=null and belongId!=''">
+			and belongId=#{belongId}
+		</if>
+		<if
+			test="startTime!=null and startTime!='' and endTime!=null and endTime!=''">
+			and (createTime&gt;=#{startTime} and createTime &lt;=#{endTime})
+		</if>
+	</select>
+	
+	<!-- 获得预订单的条数 -->
+	<select id="getOnLineorderCount" resultType="int">
+		select count(1) from
+		`order` where statusCode=1 and `status`=1
+		<if test="orderNo!=null and orderNo!='' ">
+			and orderNo=#{orderNo}
+		</if>
+		<if test="belongId!=null and belongId!=''">
+			and belongId=#{belongId}
+		</if>
+		<if
+			test="startTime!=null and startTime!='' and endTime!=null and endTime!=''">
+			and (createTime&gt;=#{startTime} and createTime &lt;=#{endTime})
+		</if>
+	</select>
+
+	
+	<!-- 根据订单ID获得订单详细信息 -->
+	<select id="getOrderById" resultType="Order">
+	   select * from `order` where orderNo=#{orderId};
+	</select>
+	
+	<!-- 获取某个订单的详细信息 （多表查） -->
+	<select id="getOrderStatus" resultType="OrderStatus">
+		SELECT
+		o.*,s.statusName,a.agentName,g.goodsCategoryName,p.payTypeName,gs.*
+		from
+		`order` o INNER JOIN `status` s ON o.statusCode=s.statusCode and
+		o.`status`=s.`status`
+		INNER JOIN agent a ON a.agentNumber=o.belongId
+		INNER JOIN goodscategory g on
+		g.goodsCategoryId=o.goodsId INNER JOIN
+		paytype p ON
+		p.payTypeId=o.payType INNER JOIN goodsize gs on
+		gs.goodsNo=o.orderNo and orderNo=#{orderNo}
+	</select>
+	
+	<!-- 获取某个订单的详细信息 -->
+	<select id="getOrder" resultType="OrderStatus">
+		select * from `order` o INNER 
+		JOIN goodsize gs on gs.goodsNo=o.orderNo and orderNo=#{orderNo}
+	</select>
+	
+	<!-- 获取订单列表的全部信息 -->
+	<select id="listOrderStatus" resultType="OrderStatus">
+		SELECT DISTINCT
+		o.*,s.statusName,a.agentName,g.goodsCategoryName,p.payTypeName,gs.*
+		from
+		`order` o INNER JOIN `status` s ON o.statusCode=s.statusCode and
+		o.`status`=s.`status`
+		INNER JOIN agent a ON a.agentNumber=o.belongId
+		INNER JOIN goodscategory g on
+		g.goodsCategoryId=o.goodsId INNER JOIN
+		paytype p ON
+		p.payTypeId=o.payType INNER JOIN goodsize gs on
+		gs.goodsNo=o.orderNo and( o.status=1 and(o.statusCode!=1 and
+		o.statusCode!=7)) INNER JOIN transinfo tr on o.orderNo=tr.orderId
+		<if test="agentId!=null and agentId!=''">
+			and tr.currentAgentId=#{agentId}
+		</if>
+		ORDER BY createTime desc limit #{index},10
+	</select>
+
+	
+
+	<!--修改订单 -->
+	<update id="modifyOrder" parameterType="Order">
+		update `order` set
+		senderName=#{senderName},senderTel=#{senderTel},senderDetail=#{senderDetail},signName=#{signName},signTel=#{signTel},signDetail=#{signDetail},goodsId=#{goodsId},insuredPrice=#{insuredPrice},payType=#{payType},remark=#{remark},modifyDate=now()
+		where orderNo=#{orderNo}  
+	</update>
+	<!-- 未处理订单的查询 -->
+	<select id="listSeachUntreated" resultType="OrderStatus">
+		SELECT o.*,s.statusName
+		FROM `order` o ,`status` s
+		<where>
+			o.status=1 and
+			o.statusCode=7 and
+			s.status=1 and s.statusCode=7
+			<if test="orderNo!=null and orderNo!=''">
+				and orderNo=#{orderNo}
+			</if>
+			<if
+				test="startTime!=null and startTime!='' and endTime!=null and endTime!=''">
+				and (createTime&gt;=#{startTime} and createTime &lt;=#{endTime})
+			</if>
+			ORDER BY createTime desc limit #{index},5
+		</where>
+	</select>
+	<!-- 预订单的查询 -->
+	<select id="listSeachWareshousing" resultType="OrderStatus">
+		SELECT o.*,s.statusName
+		FROM `order` o ,`status` s
+		<where>
+			o.status=1 and
+			o.statusCode=1 and
+			s.status=1 and s.statusCode=1
+			<if test="orderNo!=null and orderNo!=''">
+				and orderNo=#{orderNo}
+			</if>
+			<if
+				test="startTime!=null and startTime!='' and endTime!=null and endTime!=''">
+				and (createTime&gt;=#{startTime} and createTime &lt;=#{endTime})
+			</if>
+			ORDER BY createTime desc limit #{index},5
+		</where>
+	</select>
+	
+	<!-- 正式单条数查询 -->
+	<select id="getOrderCount" resultType="int">
+		SELECT count(1) from `order` o INNER JOIN transinfo tr on
+		o.orderNo=tr.orderId
+		<if test="agentId!=null and agentId!=''">
+			and tr.currentAgentId=#{agentId}
+		</if>
+		where ( o.status=1 and(o.statusCode!=1 and
+		o.statusCode!=7))
+	</select>
+
+	
+	<update id="modifyStatus">
+		update `order` set status=#{status},statusCode=#{statusCode} where orderNo=#{orderNo}
+	</update>
+</mapper>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wind.dao.CarMapper">
+
+	<!-- 查询改网点下的所有车辆信息 -->
+	<select id="listCar" resultType="com.wind.entity.combine.CarGetAll">
+		select c.*,ct.typeName,cs.statusName,a.agentName
+		from car c,cartype ct,carstatus cs,agent a
+		where 
+		c.carBelongId=(SELECT agentId from staffinfo st WHERE st.staffNo=#{staffNo})
+		and c.carType=ct.carTypeId
+		and c.carState=cs.carStatusId
+		and c.carBelongId=a.agentNumber
+		<if test="car.driverName != '' and car.driverName != null">
+			and (driverName like '%${car.driverName}%' or copilotName like '%${car.driverName}%')
+		</if>
+		LIMIT #{current},#{page}
+	</select>
+	
+	<!-- 查询改网点下的所有车辆共有多少条数据 -->
+	<select id="listCarCount" resultType="Integer">
+		select count(1)
+		from car c,cartype ct,carstatus cs,agent a
+		where 
+		c.carBelongId=(SELECT agentId from staffinfo st WHERE st.staffNo=#{staffNo})
+		and c.carType=ct.carTypeId
+		and c.carState=cs.carStatusId
+		and c.carBelongId=a.agentNumber
+		<if test="car.driverName != '' and car.driverName != null">
+			and (driverName like '%${car.driverName}%' or copilotName like '%${car.driverName}%')
+		</if>
+	</select>
+	<!-- 查询运输中车辆的运输状态 -->
+	<select id="listCarFlowPath" resultType="com.wind.entity.combine.CarFlowPath">
+		select car.carId,car.carNum,car.carNowAgent,car.carArriveAgent,a.agentName carNowAgentName,
+		(select agent.agentName from agent,car where agent.agentNumber=car.carArriveAgent and car.carId=#{carId}) carArriveAgentName
+		from car,agent a 
+		where carId=#{carId}
+		and agentNumber=(SELECT carNowAgent from car where carId=#{carId})
+	</select>
+	<!-- 查询车辆所能运往的网点编号 -->
+	<select id="listCarBelongId" resultType="com.wind.entity.combine.CarBelongId">
+		select agentNumber
+		from agent 
+		WHERE belongId=(select carNowAgent FROM car where carId=#{carId})
+		UNION ALL  
+		(SELECT belongId FROM agent where agentNumber=(select carNowAgent FROM car where carId=#{carId}))
+	</select>
+	<!-- 查询车辆状态 -->
+	<select id="addType" resultType="CarType">
+		select * from cartype
+	</select>
+	<!-- 添加车辆 -->
+	<insert id="add" parameterType="Car">
+	INSERT INTO car(carNum,driverName,driverPhone,copilotName,copilotPhone,carState,carType,carNowAgent,carBelongId,creationDate)
+	VALUES(#{carNum},#{driverName},#{driverPhone},#{copilotName},#{copilotPhone},1,#{carType},#{carNowAgent},#{carBelongId},now());
+	</insert>
+	<!-- 获得网点编号 -->
+	<select id="getAgentId" resultType="int" >
+	SELECT agentId FROM staffinfo WHERE staffNo=#{staffNo}
+	</select>
+</mapper>

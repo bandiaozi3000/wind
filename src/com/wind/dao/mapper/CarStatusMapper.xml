@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wind.dao.CarStatusMapper">
+	
+	<!-- 查看车辆全部状态 -->
+	<select id="listCarStatus" resultType="com.wind.entity.CarStatus">
+		SELECT * from carstatus
+	</select>
+	<!-- 修改车辆状态 -->
+	<update id="modityCarState">
+		UPDATE car SET carstate=#{car.carState},carArriveAgent=null WHERE carId=#{car.carId}
+	</update>
+	<!-- 修改车辆状态 -->
+	<update id="modityCarState2">
+		UPDATE car SET carstate=#{car.carState},carArriveAgent=#{car.carArriveAgent} WHERE carId=#{car.carId}
+	</update>
+</mapper>

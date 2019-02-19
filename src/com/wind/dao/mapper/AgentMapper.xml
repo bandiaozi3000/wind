@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wind.dao.AgentMapper">
+	<!-- 点击某个市时查询出该市区的全部网点 [入参:城市编号 ] -->
+	<select id="listAgent" resultType="Agent">
+	SELECT a.*,s.staffName 
+	FROM agent a , staffinfo s 
+	WHERE a.agentManager = s.staffNo 
+	AND a.cityId =#{cityId} 
+	
+	</select>
+	<!-- 删除一个网点 -->
+	<delete id="deleteAgent">
+		delete from agent where
+		agentNumber=#{agentNumber}
+	</delete>
+	<!-- 修改一个网点信息 -->
+	<update id="modityAgent" >
+		UPDATE agent set
+		agentAddress=#{agentAddress},agentHotline=#{agentHotline},agentTel=#{agentTel},agentFax=#{agentFax},agentRange=#{agentRange},agentTime=#{agentTime},agentRemarks=#{agentRemarks},modifyDate=now()
+		WHERE
+		agentNumber=#{agentNumber}
+	</update>
+	<!-- 修改一个网点信息 -->
+	<update id="moditystaff">
+		UPDATE staffInfo set
+		staffName=#{staffName},staffGender=#{staffGender}
+		WHERE
+		agentId=#{agentNumber}
+	</update>
+	<!-- 增加一个网点 -->
+	<insert id="addAgent" parameterType="Agent">
+		insert into
+		agent(agentNumber,agentName,agentAddress,agentCityId,agentLevel,
+		agentHotline,agentCode,agentTel,agentManager,agentFax,agentRange,agentTime,
+		agentRemarks,creationDate,modifyDate,belongId,rightId)
+		values(#{agentNumber},#{agentName},#{agentAddress},#{agentCityId},#{agentLevel},
+		#{agentHotline},#{agentCode},#{agentTel},#{agentManager},#{agentFax},#{agentRange},
+		#{agentTime},#{agentRemarks},now(),now(),#{belongId},#{rightId})
+	</insert>
+	<!--指定查看一个网点信息  -->
+	<select id="getAgent" resultType="Agent">
+	SELECT a.*,s.staffName 
+	FROM agent a , staffinfo s 
+	WHERE a.agentManager = s.staffNo 
+	AND a.solrId=#{solrId}
+	</select>
+	<!-- 根据城市id查询该城市下所有网点信息 -->
+	<select id="listAgentById" resultType="Agent">
+		select * from agent
+		<where>
+			agentCityId=#{cityId}
+		</where>
+	</select>
+	<!-- 根据区域ID查询该区域网点信息 -->
+	<select id="getAgentByAreaId" resultType="Agent">
+		select * from agent
+		<where>
+			agentCityId=#{areaId}
+		</where>
+	</select>
+	<!-- 根据网点编号查询网点信息 -->
+	<select id="getAgentByAgentNum" resultType="Agent">
+		select * from agent
+		where agentNumber=#{agentNumber}
+	</select>
+	<!--根据当前管理网点的负责人的工号查询下属网点带分页 -->
+	<select id="listAgentByAgentManager" resultType="Agent">
+		select a.*,s.staffName from agent a ,StaffInfo s
+		where
+		belongId=(select
+		agentNumber from agent where agentManager=#{agentManager})
+		and
+		a.agentManager = s.staffNo
+		<if test="agentName !=null"> and a.agentName like '%${agentName}%' </if>
+		LIMIT #{current},#{page}
+	</select>
+	<!--查询网点个数 -->
+	<select id="countAgent" resultType="int">
+		select count(1) from agent a
+		where
+		belongId=(select agentNumber from
+		agent where agentManager=#{agentManager})
+		<if test="agentName !=null"> and a.agentName like '%${agentName}%' </if>
+	</select>
+	<!-- 查询省 qureProvince-->
+	<select id="qureProvince" resultType="Province">
+		select * from province where  provinceId not in
+	(select agentCityId from agent where belongId=(select agentNumber from agent where agentManager=#{agentManager}))
+	</select>
+	<!--查询市 -->
+	<select id="queryCity" resultType="City">
+		select * from city where
+		cityParentId=(SELECT agentCityId FROM agent where agentManager =#{agentManager})
+		and cityId not in
+		(select agentCityId from agent where belongId=(select agentNumber from agent where agentManager=#{agentManager}))
+	</select>
+	<!--查询区（县） -->
+	<select id="queryArea" resultType="Area">
+		select * from area where
+		areaParentId = (SELECT agentCityId FROM agent where agentManager=#{agentManager})
+		and areaId not in
+		(select agentCityId from agent where belongId=(select agentNumber from agent where agentManager=#{agentManager}))
+	</select>
+	<!-- 查询当前管理的网点 -->
+	<select id="queryId" resultType="Agent">
+		select * from agent where agentManager=#{agentManager}
+	</select>
+	<!--通过工号查询所有已经添加过的 -->
+	<select id="queryAgentManager" resultType="Agent">
+		select * from agent where agentLevel =#{agentLevel} and agentNumber like '%${agentNumber}%'
+	</select>
+	<!--添加网点  -->
+	<insert id="addBranch" >
+		insert into agent values(default,#{agentNumber},#{agentName},#{agentAddress},#{agentCityId},#{agentLevel},#{agentHotline},#{agentCode},#{agentTel},#{agentManager},#{agentFax},#{agentRange},#{agentTime},#{agentRemarks},now(),now(),#{belongId},#{rightId},#{cityId},#{areaId})
+	</insert>
+	<!-- 查询属于当前工号的所有网点 -->
+	<select id="lower_Branches" resultType="Agent">
+		select a.*,s.staffName from agent a ,StaffInfo s
+		where
+		belongId=
+		(select agentNumber from agent where agentManager=#{agentManager})
+		and
+		a.agentManager = s.staffNo
+	</select>
+	<select id="findById" resultType="Agent">
+		select a.*,s.staffName from agent a ,StaffInfo s
+		where
+		agentNumber = ${agentNumber}
+		and
+		a.agentManager = s.staffNo
+	</select>
+	<!-- 查询市 -->
+	<select id="getCity" resultType="City">
+		select * from city where cityParentId=#{cityParentId}
+	</select>
+	<!-- 查询区或县 -->
+	<select id="getArea" resultType="Area">
+		select * from area where areaParentId = #{areaParentId}
+	</select>
+</mapper>

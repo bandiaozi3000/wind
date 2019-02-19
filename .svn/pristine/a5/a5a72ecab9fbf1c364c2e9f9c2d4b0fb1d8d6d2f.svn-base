@@ -1,0 +1,10 @@
+@CHARSET "UTF-8";
+.strong{
+	text-align:center;
+	}
+span{
+		color:red;
+	}
+.current .next{
+	color:red;
+}

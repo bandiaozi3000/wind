@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wind.dao.TransInfoMapper">
+	<resultMap type="TransInfoAgent" id="transInfoAgentList">
+		<result property="orderId" column="orderId" />
+		<result property="currentName" column="currentName" />
+		<result property="nextName" column="nextName" />
+		<result property="cityName" column="cityName" />
+		<result property="eventId" column="eventId" />
+		<result property="eventName" column="eventName" />
+		<result property="arrivalTime" column="arrivalTime" />
+		<result property="staffName" column="staffName" />
+		<result property="staffNo" column="staffNo" />
+		<result property="staffTel" column="staffTel" />
+		<result property="handling" column="handling" />
+	</resultMap>
+
+
+	<!-- 是否是异常单 -->
+	<select id="isException" resultType="int">
+		select count(1) from anomaly
+		where orderNo=#{orderId}
+	</select>
+	<!-- 查询正常单的运输流程 -->
+	<select id="transInfoList" resultMap="transInfoAgentList">
+		select
+		t.orderId,t.currentName,t.arrivalTime,a.agentName
+		nextName,t.cityName,s.staffName,s.staffNo,s.staffTel,e.eventId,e.eventName
+		from
+		(select
+		orderId,c.cityName,tr.currentAgentId,tr.eventId,a.agentName
+		currentName,tr.nextAgentId,tr.arrivalTime,tr.operatorId FROM transInfo
+		tr,agent a,city c WHERE tr.currentAgentId=a.agentNumber and
+		c.cityId=a.cityId and orderId=#{orderId}) t,
+		agent
+		a,staffInfo s,`event`
+		e
+		where a.agentNumber=t.nextAgentId AND
+		s.staffNo=t.operatorId and
+		e.eventId=t.eventId
+		ORDER BY t.arrivalTime
+		DESC
+	</select>
+
+	<!-- 查询订单运输流程 -->
+	<select id="adminTransInfoList" resultMap="transInfoAgentList">
+		select
+		t.orderId,t.currentName,t.arrivalTime,a.agentName
+		nextName,t.cityName,s.staffName,s.staffNo,s.staffTel,e.eventId,e.eventName,an.issueInfo,an.handling
+		from
+		(select
+		orderId,c.cityName,tr.currentAgentId,tr.eventId,a.agentName
+		currentName,tr.nextAgentId,tr.arrivalTime,tr.operatorId FROM transInfo
+		tr,agent a,city c WHERE tr.currentAgentId=a.agentNumber and
+		c.cityId=a.cityId and orderId=#{orderId}) t,
+		agent
+		a,staffInfo s,`event`
+		e,anomaly an
+		where a.agentNumber=t.nextAgentId AND
+		s.staffNo=t.operatorId and
+		e.eventId=t.eventId and
+		an.orderNo=t.orderId
+		ORDER BY t.arrivalTime
+		DESC
+	</select>
+	<!-- 用户查询运输流程 -->
+	<select id="clientTransInfoList" resultMap="transInfoAgentList">
+		select
+		t.orderId,t.currentName,t.arrivalTime,a.agentName
+		nextName,t.cityName,s.staffName,s.staffTel,e.eventId,e.eventName,an.issueInfo,an.handling
+		from
+		(select
+		orderId,c.cityName,tr.currentAgentId,tr.eventId,a.agentName
+		currentName,tr.nextAgentId,tr.arrivalTime,tr.operatorId FROM transInfo
+		tr,agent a,city c WHERE tr.currentAgentId=a.agentNumber and
+		c.cityId=a.cityId and orderId=#{orderId}) t,
+		agent
+		a,staffInfo s,`event`
+		e,anomaly an
+		where a.agentNumber=t.nextAgentId AND
+		s.staffNo=t.operatorId and
+		e.eventId=t.eventId and
+		an.orderNo=t.orderId
+		ORDER BY t.arrivalTime
+		DESC
+	</select>
+	<!-- 得到订单状态 -->
+	<select id="getOrderStatus" resultType="Status">
+		select statusName from
+		`order` o,`status` s WHERE orderNo=#{orderId} and o.status=s.status
+		and o.statusCode=s.statusCode
+	</select>
+	<!-- 添加运输信息 -->
+	<insert id="addTransInfo" parameterType="TransInfo">
+		insert into transinfo
+		<if test="nextAgentId==0">
+			values(default,#{orderId},#{currentAgentId},null,now(),#{eventId},#{operatorId},now(),now())
+		</if>
+		<if test="nextAgentId!=0">
+			values(default,#{orderId},#{currentAgentId},#{nextAgentId},now(),#{eventId},#{operatorId},now(),now())
+		</if>
+
+	</insert>
+	<!-- 查询订单最新运输信息 -->
+	<select id="findNewestTransInfo" resultType="TransInfo">
+		select * from
+		transinfo where orderId=#{orderId} order by arrivalTime desc
+		limit 0,1;
+	</select>
+
+	<!-- 查询当前网点仓库信息 -->
+	<select id="getWarehouseList" resultType="WarehouseInfo">
+		Select * from(SELECT f.*,a.agentName
+		as nextAgentName
+		from(select
+		t.*,a.agentName as
+		currentAgentName,s.staffName from
+		transinfo t INNER
+		JOIN
+		agent a on
+		a.agentNumber=t.currentAgentId INNER
+		JOIN staffinfo s ON
+		s.staffNo=t.operatorId) f Left JOIN agent a on
+		a.agentNumber=f.nextAgentId ) e where 1=1
+		<if test="keywords!=null and keywords!=''">
+			and (orderId = #{keywords} or nextAgentName = #{keywords}
+			or staffName =
+			#{keywords})
+		</if>
+		<if test="startTime!=null and startTime!=''">
+			and arrivalTime&gt;=#{startTime}
+		</if>
+		<if test="endTime!=null and endTime!=''">
+			and arrivalTime&lt;=#{endTime}
+		</if>
+		and eventId=#{eventId} and
+		currentAgentId=#{agentNum}
+		order by
+		arrivalTime desc
+		limit
+		#{startIndex},8;
+	</select>
+
+	<!-- 查询当前网点仓库订单条数 -->
+	<select id="countWarehouseList" resultType="int">
+		SELECT count(1) from(SELECT f.*,a.agentName
+		as nextAgentName
+		from(select t.*,a.agentName as
+		currentAgentName,s.staffName from
+		transinfo t INNER JOIN
+		agent a on
+		a.agentNumber=t.currentAgentId INNER
+		JOIN staffinfo s ON
+		s.staffNo=t.operatorId) f Left JOIN agent a on
+		a.agentNumber=f.nextAgentId ) e where 1=1
+		<if test="keywords!=null and keywords!=''">
+			and (orderId = #{keywords} or nextAgentName = #{keywords}
+			or staffName =
+			#{keywords})
+		</if>
+		<if test="startTime!=null and startTime!=''">
+			and arrivalTime&gt;=#{startTime}
+		</if>
+		<if test="endTime!=null and endTime!=''">
+			and arrivalTime&lt;=#{endTime}
+		</if>
+		and eventId=#{eventId} and
+		currentAgentId=#{agentNum}
+	</select>
+
+	<!-- 获取当前网点签收订单列表 -->
+	<select id="getSignOrderList" resultType="OrderStatus">
+		select * from(SELECT
+		o.*,p.payTypeName,g.goodsCategoryName,t.arrivalTime,s.statusName
+		FROM
+		`order` o
+		INNER
+		JOIN transinfo
+		t ON o.orderNo = t.orderId AND
+		t.currentAgentId =
+		#{agentId} and t.nextAgentId =0
+		INNER JOIN
+		paytype p
+		ON
+		o.payType=p.payTypeId
+		INNER JOIN goodscategory g ON
+		o.goodsId =
+		g.goodsCategoryId
+		INNER JOIN status s on o.statusCode =
+		s.statusCode
+		and
+		o.status =
+		s.status) e where 1=1
+		<if test="keywords!=null and keywords!=''">
+			and (orderNo = #{keywords} or signName = #{keywords}
+			or
+			signTel =
+			#{keywords})
+		</if>
+		<if test="payType!=0">
+			and payType=#{payType}
+		</if>
+		<if test="goodsId!=0">
+			and goodsId=#{goodsId}
+		</if>
+		<if test="statusCode==8">
+			and statusCode=#{statusCode} and status=1
+		</if>
+		<if test="statusCode==9">
+			and statusCode=#{statusCode} and status=1
+		</if>
+		<if test="statusCode==2">
+			and statusCode=#{statusCode} and status=2
+		</if>
+		group by orderNo LIMIT
+		#{startIndex},8;
+	</select>
+
+	<!-- 获取当前网点签收订单总数 -->
+	<select id="countSignOrderList" resultType="int">
+		select count(1) from (select * from(SELECT
+		o.*,p.payTypeName,g.goodsCategoryName,t.arrivalTime,s.statusName
+		FROM
+		`order` o
+		INNER
+		JOIN transinfo
+		t ON o.orderNo = t.orderId AND
+		t.currentAgentId =
+		#{agentId} and t.nextAgentId =0
+		INNER JOIN
+		paytype p
+		ON
+		o.payType=p.payTypeId
+		INNER JOIN goodscategory g ON
+		o.goodsId =
+		g.goodsCategoryId
+		INNER JOIN status s on o.statusCode =
+		s.statusCode
+		and
+		o.status =
+		s.status) e where 1=1
+		<if test="keywords!=null and keywords!=''">
+			and (orderNo = #{keywords} or signName = #{keywords}
+			or
+			signTel =
+			#{keywords})
+		</if>
+		<if test="payType!=0">
+			and payType=#{payType}
+		</if>
+		<if test="goodsId!=0">
+			and goodsId=#{goodsId}
+		</if>
+		<if test="statusCode!=0">
+			and statusCode=#{statusCode}
+		</if>
+		group by orderNo) f
+	</select>
+
+	<!-- 根据订单获取运输信息 -->
+	<select id="getTransInfoList" resultMap="transInfoAgentList">
+		select
+		t.orderId,t.currentName,a.agentName
+		nextName,c.cityName,e.eventId,e.eventName,t.arrivalTime,s.staffName,s.staffNo,s.staffTel,an.issueInfo,an.handling
+		FROM
+		(select orderId,tr.currentAgentId,tr.eventId,a.agentName
+		currentName,tr.nextAgentId,tr.arrivalTime,tr.operatorId FROM transInfo
+		tr,agent a WHERE tr.currentAgentId=a.agentNumber) t
+		LEFT JOIN agent a
+		on a.agentNumber=t.nextAgentId
+		LEFT JOIN staffInfo s on
+		s.staffNo=t.operatorId
+		LEFT JOIN city c on c.cityId=a.cityId
+		LEFT JOIN
+		`event` e on e.eventId=t.eventId
+		LEFT JOIN anomaly an on
+		an.orderNo=t.orderId
+		where t.orderId=#{orderId}
+		ORDER BY t.arrivalTime
+		DESC
+	</select>
+</mapper>

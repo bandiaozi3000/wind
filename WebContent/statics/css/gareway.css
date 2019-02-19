@@ -1,0 +1,8 @@
+.Mian-cont-wrap { margin: 0 2%; background: #fff; border: 1px solid #dbd9e1;}
+.defaultTab-T {background: #fdfdfd; border-bottom: 1px solid #f1eff6;}
+.defaultTable { width: 98%; margin: 0 auto;}
+.defaultTable tr { position: relative;}
+.defaultTable th { height: 48px; background: #fdfdfd; font-weight: normal; font-size: 16px; color: #363636; }
+.defaultTable2 { width: 98%; margin: 5px auto;}
+.defaultTable td { color: #545454; padding: 15px 0; border-bottom: 1px solid #f6f5fa;}
+.defaultTable tr:hover { background: #fafafa;}

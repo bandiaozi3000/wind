@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wind.dao.AreaMapper">
+	<select id="listAreaByParentId" resultType="Area">
+		select * from area
+		<where>
+			areaParentId=#{areaParentId}
+		</where>
+	</select>
+	
+	<!-- 查询获取区县名 -->
+	<select id="getArea" resultType="Area">
+	
+	select * from area  where areaName=#{areaName}
+	</select>
+	<!-- 通过地区id获取地区全部信息 -->
+	<select id="getAreaDetail" resultType="Area">
+		select * from area
+		<where>
+			areaId=#{areaId}
+		</where>
+	</select>
+	
+</mapper>

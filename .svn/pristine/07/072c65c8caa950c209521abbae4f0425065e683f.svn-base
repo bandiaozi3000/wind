@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wind.dao.StaffInfoMapper">
+	<!-- 登录验证 -->
+	<select id="login" resultType="StaffInfo">
+		select *  from staffInfo where staffNo=#{staffNo}
+	</select>
+	<insert id="addStaffInfo">
+		insert into staffInfo(staffNo,staffPassword,agentId,staffName,staffGender,staffAge,categoryId,staffTel,creationDate,modifyDate)
+		values(#{staffNo},#{staffPassWord},#{agentId},#{staffName},#{staffGender},#{staffAge},#{categoryId},#{staffTel},now(),now())
+	</insert>
+	<select id="getAll" resultType="StaffInfo">
+		SELECT s.*,r.rightName FROM staffInfo s,rightInfo r where agentId=(select agentId from staffInfo where staffNo=#{agentManager} )
+		and s.categoryId = r.rightid
+		<if test="staffName != null"> and staffName like '%${staffName}%'</if>
+		ORDER BY staffNo ASC
+		LIMIT #{current},#{page}
+	</select>
+	<select id="count" resultType="int">
+		SELECT COUNT(1) FROM staffInfo where agentId=(select agentId from staffInfo where staffNo=#{agentManager} )
+		<if test="staffName != null"> and staffName like '%${staffName}%'</if>
+	</select>
+	<select id="findById" resultType="StaffInfo">
+		select * from staffInfo where staffNo=#{staffNo}
+	</select>
+	<select id="allStaffInfo" resultType="StaffInfo">
+		select * from staffInfo where agentId=#{agentId}
+		ORDER BY staffNo ASC
+	</select>
+	<!-- 通过网点编号进行删除 -->
+	<delete id="deleteUser" >
+		delete from staffInfo where agentId=#{agentId}
+	</delete>
+	<!--修改信息 -->
+	<update id="updateStaffInfo">
+		update  staffInfo set staffName=#{staffName},staffGender=#{staffGender},staffAge=#{staffAge},staffPassWord=#{staffPassWord},staffTel=#{staffTel},categoryId=#{categoryId},modifyDate=now()
+		where staffNo=#{staffNo}
+	</update>
+	<delete id="deletestaff">
+		delete from staffInfo where staffNo=#{staffNo}
+	</delete>
+</mapper>

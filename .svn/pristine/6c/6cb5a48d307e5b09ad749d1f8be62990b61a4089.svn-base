@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wind.dao.AnomalyMapper">
+	<!-- 总部查询所有 -->
+	<select id="listAll" resultType="AnomalyInfo">
+		select orderNo,statusName,issueInfo,agentName,anomaly.creationDate,anomaly.modifyDate,handling,anomaly.statusCode,anomaly.handledCode,anomaly.agentNumber
+		from anomaly,status,agent 
+		<where>
+			(anomaly.statusCode=`status`.statusCode and `status`.status=2) 
+			and anomaly.agentNumber=agent.agentNumber
+			<if test="anomalySearch.agentInfo!=null and anomalySearch.agentInfo!=''">
+				 and (anomaly.agentNumber like "%"#{anomalySearch.agentInfo}"%" or anomaly.agentNumber in (select agentNumber from agent where agentName like "%"#{anomalySearch.agentInfo}"%"))
+			</if>
+			<if test="anomalySearch.handledCode!=0">
+				 and handledCode=#{anomalySearch.handledCode}
+			</if>
+			<if test="anomalySearch.orderNo!=null and anomalySearch.orderNo!=''">
+				  and orderNo=#{anomalySearch.orderNo}
+			</if>
+		</where>
+		 order by handledCode asc,creationDate desc 
+		limit #{startIndex},#{pageSize}
+	</select>
+	
+	<!-- 网点查询所有 -->
+	<select id="listAllInAgent" resultType="AnomalyInfo">
+		select orderNo,statusName,issueInfo,agentName,anomaly.creationDate,anomaly.modifyDate,handling,anomaly.statusCode,anomaly.handledCode,anomaly.agentNumber
+		from anomaly,status,agent 
+		<where>
+			anomaly.agentNumber=#{anomalySearch.currentAgentNo} 
+			and (anomaly.statusCode=`status`.statusCode and `status`.status=2) 
+			and anomaly.agentNumber=agent.agentNumber
+			<if test="anomalySearch.handledCode!=0">
+				 and handledCode=#{anomalySearch.handledCode}
+			</if>
+			<if test="anomalySearch.orderNo!=null and anomalySearch.orderNo!=''">
+				  and orderNo=#{anomalySearch.orderNo}
+			</if>
+		</where>
+		 order by handledCode asc,creationDate desc 
+		 limit #{startIndex},#{pageSize}
+	</select>
+	
+	<!-- 新增异常件-->
+	<insert id="addAnomaly" parameterType="Anomaly">
+		insert into anomaly values (default,#{orderNo},#{statusCode},#{issueInfo},1,'',#{agentNumber},now(),now())
+	</insert>
+		
+	<!-- 删除异常件 -->
+	<delete id="deleteAnomaly">
+		delete from anomaly where orderNo=#{orderNo} and agentNumber=#{agentNumber}
+	</delete>
+	
+	<!-- 更新异常件，主要是ajax使用，下拉框中将类型修改 --> 
+	<update id="modifyStatus">
+		update anomaly set statusCode=#{statusCode} where orderNo=#{orderNo} and agentNumber=#{agentNumber}
+	</update>
+	
+	<!-- 改处理信息 -->
+	<update id="modifyAnomaly" parameterType="Anomaly">
+		update anomaly set handledCode=2,handling=#{handling},modifyDate=now() where orderNo=#{orderNo} and agentNumber=#{agentNumber}
+	</update>
+	
+	<select id="countAll" parameterType="AnomalySearch" resultType="java.lang.Integer">
+		select count(1) from anomaly
+		<where>
+			<if test="agentInfo!=null and agentInfo!=''">
+				 and (anomaly.agentNumber like "%"#{agentInfo}"%" or anomaly.agentNumber in (select agentNumber from agent where agentName like "%"#{agentInfo}"%"))
+			</if>
+			<if test="handledCode!=0">
+				 and handledCode=#{handledCode}
+			</if>
+			<if test="orderNo!=null and orderNo!=''">
+				  and orderNo=#{orderNo}
+			</if>
+			<if test="currentAgentNo!=null and currentAgentNo!=''">
+				and agentNumber=#{currentAgentNo}
+			</if>
+		</where>
+	</select>
+</mapper>
